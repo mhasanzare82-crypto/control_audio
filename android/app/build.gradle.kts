@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.exm1"
+    namespace = "com.mhasanzare82.controlaudio.test"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,10 +15,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.exm1"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // Unique application ID for the separate playback-detection test build.
+        applicationId = "com.mhasanzare82.controlaudio.test"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -27,8 +25,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Signing with the debug key for this test build.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
