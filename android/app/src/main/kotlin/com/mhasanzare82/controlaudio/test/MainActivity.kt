@@ -8,9 +8,11 @@ import android.os.Looper
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val playbackEventChannel = "control_audio/playback_events"
+    private val volumeMethodChannel = "control_audio/volume"
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var audioManager: AudioManager? = null
@@ -41,6 +43,32 @@ class MainActivity : FlutterActivity() {
                 eventSink = null
             }
         })
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            volumeMethodChannel
+        ).setMethodCallHandler { call, result ->
+            val manager = getSystemService(AUDIO_SERVICE) as AudioManager
+            when (call.method) {
+                "getVolume" -> {
+                    val maximum = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                    val current = manager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    result.success(mapOf("current" to current, "maximum" to maximum))
+                }
+                "setVolume" -> {
+                    val percent = call.argument<Number>("percent")?.toInt()
+                    if (percent == null || percent !in 0..100) {
+                        result.error("INVALID_VOLUME", "Volume must be between 0 and 100", null)
+                    } else {
+                        val maximum = manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                        val target = (maximum * percent / 100.0).toInt()
+                        manager.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+                        result.success(null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     private fun startPlaybackMonitoring() {
@@ -59,9 +87,6 @@ class MainActivity : FlutterActivity() {
 
         playbackCallback = callback
         manager.registerAudioPlaybackCallback(callback, mainHandler)
-
-        // Ordinary apps receive playback configurations without reliable
-        // attribution to the package that owns each playback session.
         eventSink?.success(manager.activePlaybackConfigurations.size)
     }
 
