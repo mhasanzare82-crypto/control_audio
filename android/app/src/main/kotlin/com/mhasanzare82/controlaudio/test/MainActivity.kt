@@ -87,7 +87,7 @@ class MainActivity : FlutterActivity() {
             }
             mapOf(
                 "index" to index + 1,
-                "playerState" to config.playerState,
+                "playerState" to readPlayerState(config),
                 "uid" to (uid ?: -1),
                 "uidStatus" to uidStatus,
                 "packageNames" to packages,
@@ -97,6 +97,17 @@ class MainActivity : FlutterActivity() {
             )
         }
         return mapOf("count" to players.size, "players" to players)
+    }
+
+    // Diagnostic probe only: this accessor is not exposed by every Android SDK surface.
+    // Reflection keeps compilation independent of whether the SDK exposes getPlayerState().
+    private fun readPlayerState(config: AudioPlaybackConfiguration): Int {
+        return try {
+            val method = AudioPlaybackConfiguration::class.java.getMethod("getPlayerState")
+            (method.invoke(config) as? Number)?.toInt() ?: -1
+        } catch (_: Throwable) {
+            -1
+        }
     }
 
     // Diagnostic probe only: Android may hide or anonymize this system API.
